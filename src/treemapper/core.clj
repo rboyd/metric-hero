@@ -13,7 +13,8 @@
 (defn walk [^File file]
   (let [node     {:name (.getName file)}
         children (map walk (.listFiles file))]
-    (if (empty? children) (assoc node :size (.length file)) (assoc node :children children))))
+    (-> (if (empty? children) (assoc node :size (.length file)) (assoc node :children children))
+        (assoc :modified (.lastModified file)))))
 
 (defn analyze [dir]
   (spit "output.json" (-> dir as-file walk json/write-str)))
