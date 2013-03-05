@@ -6,9 +6,17 @@
 (def r (THREE/CanvasRenderer.))
 (def objects (array))
 (def object-to-file (atom {}))
+(def clock (THREE/Clock.))
+(def controls (THREE/FlyControls. camera))
 
 (defn ^:export init []
   (.set (.-position camera) 400 650 1000)
+  (doto controls
+    (aset "movementSpeed" 1000)
+    (aset "domElement" (.-domElement r))
+    (aset "autoForward" false)
+    (aset "rollSpeed" (/ Math/PI 24))
+    (aset "dragToLook" true))
   (.lookAt camera (THREE/Vector3. 400 0 300))
   (.setSize r window/innerWidth window/innerHeight)
   (.appendChild document/body (.-domElement r))
@@ -20,7 +28,7 @@
 (defn ^:export render-node [node]
   (let [width     (.-dx node)
         length    (.-dy node)
-        height    (scale-fn (.-modified node))
+        height    (if (.hasOwnProperty node "children") 0 (scale-fn (.-modified node)))
         x         (+ (.-x node) (/ width 2))
         y         (/ height 2)
         z         (+ (.-y node) (/ length 2))
@@ -100,7 +108,13 @@
   (.addEventListener js/document "mousedown" click-handler false)
   (.addEventListener js/document "resize" resize-handler false))
 
+(defn animate []
+  (js/requestAnimationFrame animate)
+  (.update controls (.getDelta clock))
+  (.render r scene camera))
+
 (defn ^:export render []
   (init)
   (.json js/d3 "output.json" parse-nodes)
-  (add-event-handlers))
+  (add-event-handlers)
+  (animate))
