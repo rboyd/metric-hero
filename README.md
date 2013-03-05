@@ -5,16 +5,21 @@ Treemap Layout](https://github.com/mbostock/d3/wiki/Treemap-Layout)
 
 ## Example
 
-A treemap of the [ClojureScript
-One](https://github.com/brentonashworth/one) codebase:
+A 3d treemap of treemapper's own codebase:
 
-![ClojureScript One Treemap](https://raw.github.com/wiki/rboyd/treemapper/images/one-map.png)
+![Treemapper Treemap](https://raw.github.com/wiki/rboyd/treemapper/images/treemapper-map.png)
 
 ## Usage
 
-(spit "somedir.json (treemap.core/walk "/somedir"))
+```clojure
+(require 'treemapper.core)
+(treemapper.core/analyze "work/treemapper")
+```
 
-
+* Copy output.json into resources/public
+* Start sinatra: ```ruby serv.rb```
+* Visit ```http://localhost:4567/index.html```
+* Navigate with WASD, QE, RF, and Arrow Keys
 
 
 ## License
