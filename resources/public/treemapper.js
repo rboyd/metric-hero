@@ -21084,13 +21084,12 @@ goog.provide("treemapper");
 goog.require("cljs.core");
 treemapper.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 1E4);
 treemapper.scene = new THREE.Scene;
+treemapper.projector = new THREE.Projector;
 treemapper.r = new THREE.CanvasRenderer;
-treemapper.geometry = new THREE.CubeGeometry(200, 200, 200);
-treemapper.material = new THREE.MeshBasicMaterial({"color":1500, "wireframe":true});
+treemapper.objects = [];
+treemapper.object_to_file = cljs.core.atom.call(null, cljs.core.ObjMap.EMPTY);
 treemapper.init = function init() {
-  treemapper.camera.position["x"] = 400;
-  treemapper.camera.position["y"] = 650;
-  treemapper.camera.position["z"] = 1E3;
+  treemapper.camera.position.set(400, 650, 1E3);
   treemapper.camera.lookAt(new THREE.Vector3(400, 0, 300));
   treemapper.r.setSize(window.innerWidth, window.innerHeight);
   document.body.appendChild(treemapper.r.domElement);
@@ -21098,18 +21097,22 @@ treemapper.init = function init() {
 };
 goog.exportSymbol("treemapper.init", treemapper.init);
 treemapper.render_node = function render_node(node) {
-  var width_18031 = node.dx;
-  var length_18032 = node.dy;
-  var height_18033 = treemapper.scale_fn.call(null, node.modified);
-  var x_18034 = node.x + width_18031 / 2;
-  var y_18035 = height_18033 / 2;
-  var z_18036 = node.y + length_18032 / 2;
-  var node_geo_18037 = new THREE.CubeGeometry(width_18031, height_18033, length_18032);
-  var node_mesh_18038 = new THREE.Mesh(node_geo_18037, treemapper.material);
-  node_mesh_18038.position["x"] = x_18034;
-  node_mesh_18038.position["y"] = y_18035;
-  node_mesh_18038.position["z"] = z_18036;
-  treemapper.scene.add(node_mesh_18038);
+  var width_26801 = node.dx;
+  var length_26802 = node.dy;
+  var height_26803 = treemapper.scale_fn.call(null, node.modified);
+  var x_26804 = node.x + width_26801 / 2;
+  var y_26805 = height_26803 / 2;
+  var z_26806 = node.y + length_26802 / 2;
+  var node_geo_26807 = new THREE.CubeGeometry(width_26801, height_26803, length_26802);
+  var m_params_26808 = {"color":16711680, "opacity":0.1 * node.depth, "transparent":true};
+  var material_26809 = new THREE.MeshBasicMaterial(m_params_26808);
+  var node_mesh_26810 = new THREE.Mesh(node_geo_26807, material_26809);
+  node_mesh_26810.position["x"] = x_26804;
+  node_mesh_26810.position["y"] = y_26805;
+  node_mesh_26810.position["z"] = z_26806;
+  treemapper.scene.add(node_mesh_26810);
+  treemapper.objects.push(node_mesh_26810);
+  cljs.core.swap_BANG_.call(null, treemapper.object_to_file, cljs.core.assoc, node_mesh_26810, node.name);
   treemapper.r.render(treemapper.scene, treemapper.camera);
   return treemapper.render_nodes.call(null, node.children)
 };
@@ -21122,15 +21125,15 @@ treemapper.get_size = function get_size(node) {
   return node.size
 };
 treemapper.find_scale = function find_scale(nodes) {
-  var max_time = cljs.core.reduce.call(null, cljs.core.max, cljs.core.map.call(null, function(p1__18039_SHARP_) {
-    return p1__18039_SHARP_.modified
+  var max_time = cljs.core.reduce.call(null, cljs.core.max, cljs.core.map.call(null, function(p1__26811_SHARP_) {
+    return p1__26811_SHARP_.modified
   }, nodes));
-  var min_time = cljs.core.reduce.call(null, cljs.core.min, cljs.core.map.call(null, function(p1__18040_SHARP_) {
-    return p1__18040_SHARP_.modified
+  var min_time = cljs.core.reduce.call(null, cljs.core.min, cljs.core.map.call(null, function(p1__26812_SHARP_) {
+    return p1__26812_SHARP_.modified
   }, nodes));
   var factor = 100 / (max_time - min_time);
-  var scale_fn = function(p1__18041_SHARP_) {
-    return(p1__18041_SHARP_ - min_time) * factor
+  var scale_fn = function(p1__26813_SHARP_) {
+    return(p1__26813_SHARP_ - min_time) * factor
   };
   return scale_fn
 };
@@ -21150,8 +21153,39 @@ treemapper.print_nodes = function print_nodes(nodes) {
   return cljs.core.doall.call(null, cljs.core.map.call(null, treemapper.print_node, nodes))
 };
 goog.exportSymbol("treemapper.print_nodes", treemapper.print_nodes);
+treemapper.click_handler = function click_handler(event) {
+  event.preventDefault();
+  var mouseX = 2 * (event.clientX / window.innerWidth) - 1;
+  var mouseY = -(2 * (event.clientY / window.innerHeight)) + 1;
+  var vector = new THREE.Vector3(mouseX, mouseY, 0.5);
+  var cam_pos = treemapper.camera.position;
+  treemapper.projector.unprojectVector(vector, treemapper.camera);
+  var raycaster = new THREE.Raycaster(cam_pos, vector.sub(cam_pos).normalize());
+  var intersects = raycaster.intersectObjects(treemapper.objects);
+  if(intersects.length > 0) {
+    var rand_color = Math.random.call(null) * 16777215;
+    var clicked_obj = intersects[0].object;
+    console.log(cljs.core.deref.call(null, treemapper.object_to_file).call(null, clicked_obj));
+    clicked_obj.material.color.setHex(rand_color);
+    return treemapper.r.render(treemapper.scene, treemapper.camera)
+  }else {
+    return null
+  }
+};
+treemapper.resize_handler = function resize_handler(event) {
+  var w = window.innerWidth;
+  var h = window.innerHeight;
+  treemapper.camera["aspect"] = w / h;
+  treemapper.camera.updateProjectionMatrix();
+  return treemapper.r.setSize(w, h)
+};
+treemapper.add_event_handlers = function add_event_handlers() {
+  document.addEventListener("mousedown", treemapper.click_handler, false);
+  return document.addEventListener("resize", treemapper.resize_handler, false)
+};
 treemapper.render = function render() {
   treemapper.init.call(null);
-  return d3.json("output.json", treemapper.parse_nodes)
+  d3.json("output.json", treemapper.parse_nodes);
+  return treemapper.add_event_handlers.call(null)
 };
 goog.exportSymbol("treemapper.render", treemapper.render);
