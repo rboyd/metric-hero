@@ -10,11 +10,11 @@
         (string? s) (File. s)  ; return java.io.File for path s
         :else (throw (FileNotFoundException. (str s)))))
 
-(defn filter-files [^File file ignore]
-  (let [files        (.listFiles file)
-        regex-filter (fn [fname]
-                       (not-any? #(re-find % (.getName fname)) ignore))]
-    (filter regex-filter files)))
+(defn filter-files [^File dir ignore]
+  (for [file (.listFiles dir)
+        :let [name (.getName file)]
+        :when (not-any? #(re-find % name) ignore)]
+    file))
 
 (defn walk [^File file & {:keys [ignore]}]
   (let [node     {:name (.getName file)}
