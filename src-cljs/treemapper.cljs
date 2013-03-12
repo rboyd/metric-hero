@@ -55,7 +55,7 @@
 
 (defn find-scale [nodes]
   (let [max-time (reduce max (map #(.-modified %) nodes))
-        min-time (reduce min (map #(.-modified %) nodes))
+        min-time (reduce min (filter pos? (map #(.-modified %) nodes)))
         factor   (/ 100 (- max-time min-time))
         scale-fn #(* (- % min-time) factor)]
     scale-fn))
