@@ -6,7 +6,10 @@
   :plugins [[lein-cljsbuild "0.3.0"]]
   :dependencies [[org.clojure/clojure "1.4.0"]
                  [org.clojure/data.json "0.2.1"]
-                 [clj-jgit "0.2.1"]]
+                 [clj-jgit "0.2.1"]
+                 [ring/ring-jetty-adapter "1.2.0-beta2"]
+                 [compojure "1.1.5"]]
+  :main treemapper.core
   :cljsbuild {
     :builds [{
         ; The path to the top-level ClojureScript source directory:

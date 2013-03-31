@@ -1,8 +1,13 @@
 (ns treemapper.core
+  (:gen-class)
+  (:use compojure.core)
+  (:use ring.adapter.jetty)
   (:require [clojure.data.json :as json]
             [clojure.set :refer [rename-keys]]
             [clj-jgit.porcelain :refer [load-repo with-repo git-log]]
-            [clj-jgit.querying :refer [rev-list commit-info]])
+            [clj-jgit.querying :refer [rev-list commit-info]]
+            [compojure.route :as route]
+            [ring.util.response :as resp])
   (:import java.io.File)
   (:import java.io.FileNotFoundException))
 
@@ -56,3 +61,11 @@
                            name-to-time
                            (prepend-keys dir-slash))]
     (spit "output.json" (-> dir as-file (walk file-time-map :ignore ignore) json/write-str))))
+
+(defroutes app
+  (GET "/" [] (resp/file-response "index.html" {:root "resources/public"}))
+  (route/resources "/"))
+
+(defn -main
+  [& args]
+  (run-jetty app {:port 3000}))
