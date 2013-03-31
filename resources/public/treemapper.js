@@ -21100,8 +21100,7 @@ treemapper.init = function init() {
   G__2854_2855["dragToLook"] = true;
   treemapper.camera.lookAt(new THREE.Vector3(400, 0, 300));
   treemapper.r.setSize(window.innerWidth, window.innerHeight);
-  document.body.appendChild(treemapper.r.domElement);
-  return treemapper.r.render(treemapper.scene, treemapper.camera)
+  return document.body.appendChild(treemapper.r.domElement)
 };
 goog.exportSymbol("treemapper.init", treemapper.init);
 treemapper.render_node = function render_node(node) {
@@ -21121,7 +21120,6 @@ treemapper.render_node = function render_node(node) {
   treemapper.scene.add(node_mesh_2865);
   treemapper.objects.push(node_mesh_2865);
   cljs.core.swap_BANG_.call(null, treemapper.object_to_file, cljs.core.assoc, node_mesh_2865, node.name);
-  treemapper.r.render(treemapper.scene, treemapper.camera);
   return treemapper.render_nodes.call(null, node.children)
 };
 goog.exportSymbol("treemapper.render_node", treemapper.render_node);

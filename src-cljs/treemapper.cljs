@@ -19,8 +19,7 @@
     (aset "dragToLook" true))
   (.lookAt camera (THREE/Vector3. 400 0 300))
   (.setSize r window/innerWidth window/innerHeight)
-  (.appendChild document/body (.-domElement r))
-  (.render r scene camera))
+  (.appendChild document/body (.-domElement r)))
 
 (declare scale-fn)
 (declare render-nodes)
@@ -43,8 +42,7 @@
     (aset (.-position node-mesh) "z" z)
     (.add scene node-mesh)
     (.push objects node-mesh)
-    (swap! object-to-file assoc node-mesh (.-name node))
-    (.render r scene camera))
+    (swap! object-to-file assoc node-mesh (.-name node)))
   (render-nodes (.-children node)))
 
 (defn ^:export render-nodes [nodes]
