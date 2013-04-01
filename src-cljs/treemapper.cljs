@@ -1,4 +1,5 @@
 (ns treemapper)
+;  (:require [clojure.browser.repl :as repl]))
 
 (def camera (THREE/PerspectiveCamera. 75 (/ window/innerWidth window/innerHeight) 1 10000))
 (def scene (THREE/Scene.))
@@ -25,25 +26,26 @@
 (declare render-nodes)
 
 (defn ^:export render-node [node]
-  (let [width     (.-dx node)
-        length    (.-dy node)
-        height    (if (.hasOwnProperty node "children") 0 (scale-fn (.-modified node)))
-        x         (+ (.-x node) (/ width 2))
-        y         (/ height 2)
-        z         (+ (.-y node) (/ length 2))
-        node-geo  (THREE/CubeGeometry. width height length)
-        m-params  (js-obj "color" 0xff0000
-                          "opacity" (* .1 (.-depth node))
-                          "transparent" true)
-        material  (THREE/MeshBasicMaterial. m-params)
-        node-mesh (THREE/Mesh. node-geo material)]
-    (aset (.-position node-mesh) "x" x)
-    (aset (.-position node-mesh) "y" y)
-    (aset (.-position node-mesh) "z" z)
-    (.add scene node-mesh)
-    (.push objects node-mesh)
-    (swap! object-to-file assoc node-mesh (.-name node)))
-  (render-nodes (.-children node)))
+  (if (pos? (.-modified node))
+    (let [width     (.-dx node)
+          length    (.-dy node)
+          height    (if (.hasOwnProperty node "children") 0 (scale-fn (.-modified node)))
+          x         (+ (.-x node) (/ width 2))
+          y         (/ height 2)
+          z         (+ (.-y node) (/ length 2))
+          node-geo  (THREE/CubeGeometry. width height length)
+          m-params  (js-obj "color" 0xff0000
+                            "opacity" (* .1 (.-depth node))
+                            "transparent" true)
+          material  (THREE/MeshBasicMaterial. m-params)
+          node-mesh (THREE/Mesh. node-geo material)]
+      (aset (.-position node-mesh) "x" x)
+      (aset (.-position node-mesh) "y" y)
+      (aset (.-position node-mesh) "z" z)
+      (.add scene node-mesh)
+      (.push objects node-mesh)
+      (swap! object-to-file assoc node-mesh (str (.-name node) " " (.-modified node))))
+    (render-nodes (.-children node))))
 
 (defn ^:export render-nodes [nodes]
   (doall (map render-node nodes)))
@@ -51,10 +53,14 @@
 (defn get-size [node]
   (.-size node))
 
-(defn find-scale [nodes]
-  (let [max-time (reduce max (map #(.-modified %) nodes))
-        min-time (reduce min (filter pos? (map #(.-modified %) nodes)))
-        factor   (/ 100 (- max-time min-time))
+(defn find-scale [root]
+  (let [tseq (tree-seq (complement nil?) #(.-children %) root)
+        dir? #(-> (.-children %) count pos?)
+        files-only (remove dir? tseq)
+        modified (filter pos? (map #(.-modified %) files-only))
+        max-time (apply max modified)
+        min-time (apply min modified)
+        factor   (/ 400 (- max-time min-time))
         scale-fn #(* (- % min-time) factor)]
     scale-fn))
 
@@ -65,7 +71,7 @@
                        (.size (array 800 600))
                        (.sticky true)
                        (.value get-size))]
-    (def scale-fn (find-scale (.-children root)))
+    (def scale-fn (find-scale nodes))
     (.nodes d3-treemap nodes)
     (render-nodes (.-children nodes))))
 
@@ -112,6 +118,7 @@
   (.render r scene camera))
 
 (defn ^:export render []
+;  (repl/connect "http://localhost:9000/repl")
   (init)
   (.json js/d3 "output.json" parse-nodes)
   (add-event-handlers)
