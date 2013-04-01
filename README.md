@@ -1,24 +1,28 @@
-# treemapper
+# metric hero
 
-Given a directory, outputs a JSON file in the format expected by the [d3
-Treemap Layout](https://github.com/mbostock/d3/wiki/Treemap-Layout)
+> The hero is one who kindles a great light in the world, who sets up blazing torches in the dark streets of life for men to see by.
+
+> -- *Felix Adler*
+
+Metric hero analyzes your codebase and builds interactive visualizations. Use it to more effectively learn your way around a new codebase, or to focus your efforts on evolving existing projects.
+
 
 ## Example
 
-A 3d treemap of treemapper's own codebase:
+A 3d treemap of metric hero's own codebase:
 
-![Treemapper Treemap](https://raw.github.com/wiki/rboyd/treemapper/images/treemapper-map.png)
+![Metric Hero Treemap](https://raw.github.com/wiki/rboyd/metric-hero/images/treemapper-map.png)
 
 ## Usage
 
 ```clojure
 (require 'treemapper.core)
-(treemapper.core/analyze "work/treemapper")
+(treemapper.core/analyze "/path/to/repo")
 ```
 
 * Copy output.json into resources/public
-* Start sinatra: ```ruby serv.rb```
-* Visit ```http://localhost:4567/index.html```
+* Start jetty: ```lein run```
+* Visit ```http://localhost:3000/```
 * Navigate with WASD, QE, RF, and Arrow Keys
 
 
