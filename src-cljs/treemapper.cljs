@@ -1,5 +1,6 @@
-(ns treemapper)
-;  (:require [clojure.browser.repl :as repl]))
+(ns treemapper
+  (:require [clojure.browser.repl :as repl]
+            [metric-hero.controller :as controller]))
 
 (def camera (THREE/PerspectiveCamera. 75 (/ window/innerWidth window/innerHeight) 1 10000))
 (def scene (THREE/Scene.))
@@ -114,11 +115,16 @@
 
 (defn animate []
   (js/requestAnimationFrame animate)
+  (let [moveState (.-moveState controls)
+        cam-pos   (.-position camera)
+        cam-z     (.-z cam-pos)]
+    (if (> (controller/accelerator) 0.25)
+      (aset cam-pos "z" (+ 10 cam-z))))
   (.update controls (.getDelta clock))
   (.render r scene camera))
 
 (defn ^:export render []
-;  (repl/connect "http://localhost:9000/repl")
+  (repl/connect "http://localhost:9000/repl")
   (init)
   (.json js/d3 "output.json" parse-nodes)
   (add-event-handlers)

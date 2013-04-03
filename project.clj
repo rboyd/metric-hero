@@ -17,6 +17,6 @@
         ; The standard ClojureScript compiler options:
         ; (See the ClojureScript compiler documentation for details.)
         :compiler {
-          :output-to "resources/treemapper.js"
+          :output-to "resources/public/treemapper.js"
           :optimizations :whitespace
-          :pretty-print true}}]}) 
+          :pretty-print true}}]})
