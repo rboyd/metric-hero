@@ -1,4 +1,4 @@
-(ns treemapper)
+(ns metric-hero)
 ;  (:require [clojure.browser.repl :as repl]))
 
 (def camera (THREE/PerspectiveCamera. 75 (/ window/innerWidth window/innerHeight) 1 10000))

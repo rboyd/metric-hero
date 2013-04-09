@@ -1,4 +1,4 @@
-(ns treemapper.core
+(ns metric-hero.core
   (:gen-class)
   (:use compojure.core)
   (:use ring.adapter.jetty)

@@ -16,11 +16,12 @@ A 3d treemap of metric hero's own codebase:
 ## Usage
 
 ```clojure
-(require 'treemapper.core)
-(treemapper.core/analyze "/path/to/repo")
+(require 'metric-hero.core)
+(metric-hero.core/analyze "/path/to/repo")
 ```
 
 * Copy output.json into resources/public
+* Compile ClojureScript ```lein cljsbuild once```
 * Start jetty: ```lein run```
 * Visit ```http://localhost:3000/```
 * Navigate with WASD, QE, RF, and Arrow Keys
