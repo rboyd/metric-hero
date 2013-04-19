@@ -487,6 +487,19 @@ goog.base = function(me, opt_methodName, var_args) {
 goog.scope = function(fn) {
   fn.call(goog.global)
 };
+goog.provide("goog.debug.Error");
+goog.debug.Error = function(opt_msg) {
+  if(Error.captureStackTrace) {
+    Error.captureStackTrace(this, goog.debug.Error)
+  }else {
+    this.stack = (new Error).stack || ""
+  }
+  if(opt_msg) {
+    this.message = String(opt_msg)
+  }
+};
+goog.inherits(goog.debug.Error, Error);
+goog.debug.Error.prototype.name = "CustomError";
 goog.provide("goog.string");
 goog.provide("goog.string.Unicode");
 goog.string.Unicode = {NBSP:"\u00a0"};
@@ -927,19 +940,6 @@ goog.string.parseInt = function(value) {
   }
   return NaN
 };
-goog.provide("goog.debug.Error");
-goog.debug.Error = function(opt_msg) {
-  if(Error.captureStackTrace) {
-    Error.captureStackTrace(this, goog.debug.Error)
-  }else {
-    this.stack = (new Error).stack || ""
-  }
-  if(opt_msg) {
-    this.message = String(opt_msg)
-  }
-};
-goog.inherits(goog.debug.Error, Error);
-goog.debug.Error.prototype.name = "CustomError";
 goog.provide("goog.asserts");
 goog.provide("goog.asserts.AssertionError");
 goog.require("goog.debug.Error");
@@ -21188,6 +21188,7 @@ metric_hero.click_handler = function click_handler(event) {
   }
 };
 metric_hero.resize_handler = function resize_handler(event) {
+  console.log("in resize-handler");
   var w = window.innerWidth;
   var h = window.innerHeight;
   metric_hero.camera["aspect"] = w / h;
@@ -21196,7 +21197,7 @@ metric_hero.resize_handler = function resize_handler(event) {
 };
 metric_hero.add_event_handlers = function add_event_handlers() {
   document.addEventListener("mousedown", metric_hero.click_handler, false);
-  return document.addEventListener("resize", metric_hero.resize_handler, false)
+  return window.addEventListener("resize", metric_hero.resize_handler, false)
 };
 metric_hero.animate = function animate() {
   requestAnimationFrame(animate);
