@@ -110,7 +110,7 @@
 
 (defn add-event-handlers []
   (.addEventListener js/document "mousedown" click-handler false)
-  (.addEventListener js/document "resize" resize-handler false))
+  (.addEventListener js/window "resize" resize-handler false))
 
 (defn animate []
   (js/requestAnimationFrame animate)
