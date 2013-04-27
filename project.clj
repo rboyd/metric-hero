@@ -1,5 +1,5 @@
 (defproject metric-hero "0.1.1-SNAPSHOT"
-  :description "Metric-hero analyzes your project and emits a navigable 3D visualization of it."
+  :description "Metric-hero presents a navigable 3D visualization of your codebase."
   :url "http://github.com/rboyd/metric-hero"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
@@ -8,7 +8,8 @@
                  [org.clojure/data.json "0.2.1"]
                  [clj-jgit "0.2.1"]
                  [ring/ring-jetty-adapter "1.2.0-beta2"]
-                 [compojure "1.1.5"]]
+                 [compojure "1.1.5"]
+                 [expectations "1.4.36"]]
   :main metric-hero.core
   :cljsbuild {
     :builds [{
