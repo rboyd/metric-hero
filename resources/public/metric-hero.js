@@ -21082,27 +21082,48 @@ cljs.core.UUID.prototype.toString = function() {
 };
 goog.provide("metric_hero");
 goog.require("cljs.core");
-metric_hero.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 1E4);
+metric_hero.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 10, 1E4);
 metric_hero.scene = new THREE.Scene;
 metric_hero.projector = new THREE.Projector;
-metric_hero.r = new THREE.CanvasRenderer;
+metric_hero.renderer = new THREE.WebGLRenderer;
 metric_hero.objects = [];
 metric_hero.object_to_file = cljs.core.atom.call(null, cljs.core.ObjMap.EMPTY);
 metric_hero.clock = new THREE.Clock;
 metric_hero.controls = new THREE.FlyControls(metric_hero.camera);
 metric_hero.init = function init() {
   metric_hero.camera.position.set(400, 650, 1E3);
-  var G__2854_2855 = metric_hero.controls;
-  G__2854_2855["movementSpeed"] = 1E3;
-  G__2854_2855["domElement"] = metric_hero.r.domElement;
-  G__2854_2855["autoForward"] = false;
-  G__2854_2855["rollSpeed"] = Math.PI / 24;
-  G__2854_2855["dragToLook"] = true;
+  var G__4798_4799 = metric_hero.controls;
+  G__4798_4799["movementSpeed"] = 1E3;
+  G__4798_4799["domElement"] = metric_hero.renderer.domElement;
+  G__4798_4799["autoForward"] = false;
+  G__4798_4799["rollSpeed"] = Math.PI / 24;
+  G__4798_4799["dragToLook"] = true;
   metric_hero.camera.lookAt(new THREE.Vector3(400, 0, 300));
-  metric_hero.r.setSize(window.innerWidth, window.innerHeight);
-  return document.body.appendChild(metric_hero.r.domElement)
+  metric_hero.renderer.setSize(window.innerWidth, window.innerHeight);
+  document.body.appendChild(metric_hero.renderer.domElement);
+  metric_hero.init_depth.call(null);
+  return metric_hero.init_post_processing.call(null)
 };
 goog.exportSymbol("metric_hero.init", metric_hero.init);
+metric_hero.init_depth = function init_depth() {
+  var depth_shader = THREE.ShaderLib["depthRGBA"];
+  var depth_uniforms = THREE.UniformsUtils.clone(depth_shader.uniforms);
+  var shader_init = {"fragmentShader":depth_shader.fragmentShader, "vertexShader":depth_shader.vertexShader, "uniforms":depth_uniforms};
+  metric_hero.depth_material = new THREE.ShaderMaterial(shader_init);
+  return metric_hero.depth_material.blending = THREE.NoBlending
+};
+metric_hero.init_post_processing = function init_post_processing() {
+  metric_hero.composer = new THREE.EffectComposer(metric_hero.renderer);
+  metric_hero.composer.addPass(new THREE.RenderPass(metric_hero.scene, metric_hero.camera));
+  metric_hero.depth_target = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight, {"minFilter":THREE.NearestFilter, "magFilter":THREE.NearestFilter, "format":THREE.RGBAFormat});
+  var effect = new THREE.ShaderPass(THREE.SSAOShader);
+  effect.uniforms["tDepth"].value = metric_hero.depth_target;
+  effect.uniforms["size"].value.set(window.innerWidth, window.innerHeight);
+  effect.uniforms["cameraNear"].value = metric_hero.camera.near;
+  effect.uniforms["cameraFar"].value = metric_hero.camera.far;
+  effect.renderToScreen = true;
+  return metric_hero.composer.addPass(effect)
+};
 metric_hero.render_node = function render_node(node) {
   if(node.modified > 0) {
     var width = node.dx;
@@ -21112,7 +21133,7 @@ metric_hero.render_node = function render_node(node) {
     var y = height / 2;
     var z = node.y + length / 2;
     var node_geo = new THREE.CubeGeometry(width, height, length);
-    var m_params = {"color":16711680, "opacity":0.1 * node.depth, "transparent":true};
+    var m_params = {"color":14540253};
     var material = new THREE.MeshBasicMaterial(m_params);
     var node_mesh = new THREE.Mesh(node_geo, material);
     node_mesh.position["x"] = x;
@@ -21134,21 +21155,21 @@ metric_hero.get_size = function get_size(node) {
   return node.size
 };
 metric_hero.find_scale = function find_scale(root) {
-  var tseq = cljs.core.tree_seq.call(null, cljs.core.complement.call(null, cljs.core.nil_QMARK_), function(p1__2856_SHARP_) {
-    return p1__2856_SHARP_.children
+  var tseq = cljs.core.tree_seq.call(null, cljs.core.complement.call(null, cljs.core.nil_QMARK_), function(p1__4800_SHARP_) {
+    return p1__4800_SHARP_.children
   }, root);
-  var dir_QMARK_ = function(p1__2857_SHARP_) {
-    return cljs.core.count.call(null, p1__2857_SHARP_.children) > 0
+  var dir_QMARK_ = function(p1__4801_SHARP_) {
+    return cljs.core.count.call(null, p1__4801_SHARP_.children) > 0
   };
   var files_only = cljs.core.remove.call(null, dir_QMARK_, tseq);
-  var modified = cljs.core.filter.call(null, cljs.core.pos_QMARK_, cljs.core.map.call(null, function(p1__2858_SHARP_) {
-    return p1__2858_SHARP_.modified
+  var modified = cljs.core.filter.call(null, cljs.core.pos_QMARK_, cljs.core.map.call(null, function(p1__4802_SHARP_) {
+    return p1__4802_SHARP_.modified
   }, files_only));
   var max_time = cljs.core.apply.call(null, cljs.core.max, modified);
   var min_time = cljs.core.apply.call(null, cljs.core.min, modified);
   var factor = 400 / (max_time - min_time);
-  var scale_fn = function(p1__2859_SHARP_) {
-    return(p1__2859_SHARP_ - min_time) * factor
+  var scale_fn = function(p1__4803_SHARP_) {
+    return(p1__4803_SHARP_ - min_time) * factor
   };
   return scale_fn
 };
@@ -21182,18 +21203,17 @@ metric_hero.click_handler = function click_handler(event) {
     var clicked_obj = intersects[0].object;
     console.log(cljs.core.deref.call(null, metric_hero.object_to_file).call(null, clicked_obj));
     clicked_obj.material.color.setHex(rand_color);
-    return metric_hero.r.render(metric_hero.scene, metric_hero.camera)
+    return metric_hero.renderer.render(metric_hero.scene, metric_hero.camera)
   }else {
     return null
   }
 };
 metric_hero.resize_handler = function resize_handler(event) {
-  console.log("in resize-handler");
   var w = window.innerWidth;
   var h = window.innerHeight;
   metric_hero.camera["aspect"] = w / h;
   metric_hero.camera.updateProjectionMatrix();
-  return metric_hero.r.setSize(w, h)
+  return metric_hero.renderer.setSize(w, h)
 };
 metric_hero.add_event_handlers = function add_event_handlers() {
   document.addEventListener("mousedown", metric_hero.click_handler, false);
@@ -21202,7 +21222,10 @@ metric_hero.add_event_handlers = function add_event_handlers() {
 metric_hero.animate = function animate() {
   requestAnimationFrame(animate);
   metric_hero.controls.update(metric_hero.clock.getDelta());
-  return metric_hero.r.render(metric_hero.scene, metric_hero.camera)
+  metric_hero.scene.overrideMaterial = metric_hero.depth_material;
+  metric_hero.renderer.render(metric_hero.scene, metric_hero.camera, metric_hero.depth_target);
+  metric_hero.scene.overrideMaterial = null;
+  return metric_hero.composer.render()
 };
 metric_hero.render = function render() {
   metric_hero.init.call(null);

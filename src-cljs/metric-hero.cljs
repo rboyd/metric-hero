@@ -1,26 +1,57 @@
 (ns metric-hero)
 ;  (:require [clojure.browser.repl :as repl]))
 
-(def camera (THREE/PerspectiveCamera. 75 (/ window/innerWidth window/innerHeight) 1 10000))
+(def camera (THREE/PerspectiveCamera. 75 (/ window/innerWidth window/innerHeight) 10 10000))
 (def scene (THREE/Scene.))
 (def projector (THREE/Projector.))
-(def r (THREE/CanvasRenderer.))
+(def renderer (THREE/WebGLRenderer.))
 (def objects (array))
 (def object-to-file (atom {}))
 (def clock (THREE/Clock.))
 (def controls (THREE/FlyControls. camera))
 
+(declare init-depth)
+(declare init-post-processing)
+
 (defn ^:export init []
   (.set (.-position camera) 400 650 1000)
   (doto controls
     (aset "movementSpeed" 1000)
-    (aset "domElement" (.-domElement r))
+    (aset "domElement" (.-domElement renderer))
     (aset "autoForward" false)
     (aset "rollSpeed" (/ Math/PI 24))
     (aset "dragToLook" true))
   (.lookAt camera (THREE/Vector3. 400 0 300))
-  (.setSize r window/innerWidth window/innerHeight)
-  (.appendChild document/body (.-domElement r)))
+  (.setSize renderer window/innerWidth window/innerHeight)
+  (.appendChild document/body (.-domElement renderer))
+
+  (init-depth)
+  (init-post-processing))
+
+(defn init-depth []
+  (let [depth-shader (aget THREE/ShaderLib "depthRGBA")
+        depth-uniforms (.clone THREE/UniformsUtils (.-uniforms depth-shader))
+        shader-init (js-obj "fragmentShader" (.-fragmentShader depth-shader)
+                            "vertexShader" (.-vertexShader depth-shader)
+                            "uniforms" depth-uniforms)]
+    (def depth-material (THREE/ShaderMaterial. shader-init))
+    (set! (.-blending depth-material) THREE/NoBlending)))
+
+(defn init-post-processing []
+  (def composer (THREE/EffectComposer. renderer))
+  (.addPass composer (THREE/RenderPass. scene camera))
+  (def depth-target (THREE/WebGLRenderTarget. window/innerWidth window/innerHeight
+                                               (js-obj "minFilter" THREE/NearestFilter
+                                                       "magFilter" THREE/NearestFilter
+                                                       "format" THREE/RGBAFormat)))
+  (let [effect (THREE/ShaderPass. THREE/SSAOShader)]
+    (set! (.-value (aget (.-uniforms effect) "tDepth")) depth-target)
+    (.set (.-value (aget (.-uniforms effect) "size")) window/innerWidth window/innerHeight)
+    
+    (set! (.-value (aget (.-uniforms effect) "cameraNear")) (.-near camera))
+    (set! (.-value (aget (.-uniforms effect) "cameraFar")) (.-far camera))
+    (set! (.-renderToScreen effect) true)
+    (.addPass composer effect)))
 
 (declare scale-fn)
 (declare render-nodes)
@@ -34,9 +65,9 @@
           y         (/ height 2)
           z         (+ (.-y node) (/ length 2))
           node-geo  (THREE/CubeGeometry. width height length)
-          m-params  (js-obj "color" 0xff0000
-                            "opacity" (* .1 (.-depth node))
-                            "transparent" true)
+          m-params  (js-obj "color" 0xdddddd)
+                           ; "opacity" (* .1 (.-depth node))
+                           ; "transparent" true)
           material  (THREE/MeshBasicMaterial. m-params)
           node-mesh (THREE/Mesh. node-geo material)]
       (aset (.-position node-mesh) "x" x)
@@ -99,14 +130,14 @@
               .-material
               .-color
               (.setHex rand-color))
-          (.render r scene camera))))))
+          (.render renderer scene camera))))))
 
 (defn resize-handler [event]
   (let [w (.-innerWidth js/window)
         h (.-innerHeight js/window)]
     (aset camera "aspect" (/ w h))
     (.updateProjectionMatrix camera)
-    (.setSize r w h)))
+    (.setSize renderer w h)))
 
 (defn add-event-handlers []
   (.addEventListener js/document "mousedown" click-handler false)
@@ -115,11 +146,14 @@
 (defn animate []
   (js/requestAnimationFrame animate)
   (.update controls (.getDelta clock))
-  (.render r scene camera))
+  (set! (.-overrideMaterial scene) depth-material)
+  (.render renderer scene camera depth-target) 
+  (set! (.-overrideMaterial scene) nil)
+  (.render composer))
 
 (defn ^:export render []
 ;  (repl/connect "http://localhost:9000/repl")
   (init)
   (.json js/d3 "output.json" parse-nodes)
   (add-event-handlers)
-  (animate))
+  (animate)) 
