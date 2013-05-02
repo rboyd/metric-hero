@@ -1,23 +1,23 @@
-# metric hero
+# Metric Hero
 
 > The hero is one who kindles a great light in the world, who sets up blazing torches in the dark streets of life for men to see by.
 
 > -- *Felix Adler*
 
-Metric hero analyzes your codebase and builds interactive visualizations. Use it to more effectively learn your way around a new codebase, or to focus your efforts on evolving existing projects.
+Metric Hero analyzes your codebase and builds interactive visualizations. Use it to more effectively learn your way around a new codebase, or to focus your efforts on evolving existing projects.
 
 
 ## Example
 
-A 3d treemap of metric hero's own codebase:
+A Metric Hero render of the [Ruby on Rails](https://github.com/rails/rails) codebase:
 
-![Metric Hero Treemap](https://raw.github.com/wiki/rboyd/metric-hero/images/treemapper-map.png)
+![Rails Render](https://raw.github.com/wiki/rboyd/metric-hero/images/rails.png)
 
 ## Usage
 
 ```clojure
 (require 'metric-hero.core)
-(metric-hero.core/analyze "/path/to/repo")
+(metric-hero.core/analyze "/path/to/repo" :ignore [#"ignored" #"regex"])
 ```
 
 * Copy output.json into resources/public
