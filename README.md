@@ -13,6 +13,25 @@ A Metric Hero render of the [Ruby on Rails](https://github.com/rails/rails) code
 
 ![Rails Render](https://raw.github.com/wiki/rboyd/metric-hero/images/rails.png)
 
+
+## About
+
+This technique of software visualization is largely based on work from
+[Richard Wettel](http://www.inf.usi.ch/phd/wettel/index.html) and
+[Michele Lanza](http://www.inf.usi.ch/faculty/lanza/) -- specifically
+Wettel's Ph.D. thesis
+[Software Systems as Cities](http://www.inf.usi.ch/phd/wettel/download.php?f=Wettel10b-PhDThesis.pdf).
+
+In the current incarnation, a git repository is analyzed and
+projected onto three dimensions. Each building of the city represents
+a file on disk. The width and length of the buildings
+in the city are representative of the file size. The buildings are
+laid out using a
+[Treemap tiling algorithm](http://en.wikipedia.org/wiki/Treemapping#The_tiling_algorithm).
+The height of the buildings are determined based on relative commit
+times. Files that have been updated recently are taller.
+
+
 ## Usage
 
 ```clojure
